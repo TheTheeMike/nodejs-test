@@ -1,55 +1,50 @@
 pipeline {
-    agent { label 'docker-worker' }
+    agent { label 'worker' }
 
     environment {
-        DOCKER_IMAGE = "miker5904/test"
-        DOCKER_CREDENTIALS = credentials('dockerhub')
+        DOCKERHUB = credentials('dockerhub')   // from step 7
+        IMAGE_NAME = "myapp"                   // change to your app name
+        IMAGE_TAG = "latest"
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/TheTheeMike/nodejs-test.git'
+                checkout scm   // pulls the repo Jenkins job is linked to
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE:latest .'
+                sh '''
+                  echo "Building Docker image..."
+                  docker build -t $DOCKERHUB_USR/$IMAGE_NAME:$IMAGE_TAG .
+                '''
             }
         }
 
         stage('Run Tests') {
             steps {
                 script {
-                    try {
-                        sh 'docker run --rm $DOCKER_IMAGE:latest npm test'
-                    } catch (err) {
-                        error("Tests failed")
+                    def status = sh(
+                        script: "docker run --rm $DOCKERHUB_USR/$IMAGE_NAME:$IMAGE_TAG npm test",
+                        returnStatus: true
+                    )
+                    if (status != 0) {
+                        echo "Tests failed"
+                        error("Tests failed")  // stop pipeline here
                     }
                 }
             }
         }
 
         stage('Push to Docker Hub') {
-            when {
-                expression { currentBuild.result == null } // only if no errors
-            }
             steps {
                 sh '''
-                    echo "$DOCKER_CREDENTIALS_PSW" | docker login -u "$DOCKER_CREDENTIALS_USR" --password-stdin
-                    docker push $DOCKER_IMAGE:latest
+                  echo "$DOCKERHUB_PSW" | docker login -u "$DOCKERHUB_USR" --password-stdin
+                  docker push $DOCKERHUB_USR/$IMAGE_NAME:$IMAGE_TAG
                 '''
             }
-        }
-    }
-
-    post {
-        failure {
-            echo 'Tests failed'
-        }
-        success {
-            echo 'Image pushed to Docker Hub successfully'
         }
     }
 }
