@@ -24,6 +24,17 @@ pipeline {
             }
         }
 
+        stage('Push Docker Image') {
+    steps {
+        withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PSW')]) {
+            sh '''
+                echo "$DOCKERHUB_PSW" | docker login -u "$DOCKERHUB_USER" --password-stdin
+                docker push micker5904/nodejs-test:latest
+            '''
+        }
+    }
+}
+        
         stage('Run Tests') {
             steps {
                 script {
