@@ -2,23 +2,24 @@ pipeline {
     agent { label 'worker' }
 
     environment {
-        DOCKERHUB = credentials('dockerhub')   // from step 7
-        IMAGE_NAME = "app.test.js"                   // change to your app name
+        DOCKERHUB = credentials('dockerhub')
+        IMAGE_NAME = "nodejs-test"
         IMAGE_TAG = "latest"
+        APP_DIR = "forStep2"
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                checkout scm   // pulls the repo Jenkins job is linked to
+                checkout scm
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 sh '''
-                  echo "Building Docker image..."
-                  docker build -t $DOCKERHUB_USR/$IMAGE_NAME:$IMAGE_TAG .
+                  echo "Building Docker image from $APP_DIR ..."
+                  docker build -t $DOCKERHUB_USR/$IMAGE_NAME:$IMAGE_TAG $APP_DIR
                 '''
             }
         }
@@ -32,7 +33,7 @@ pipeline {
                     )
                     if (status != 0) {
                         echo "Tests failed"
-                        error("Tests failed")  // stop pipeline here
+                        error("Tests failed")
                     }
                 }
             }
