@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKERHUB = credentials('dockerhub')   // from step 7
-        IMAGE_NAME = "myapp"                   // change to your app name
+        IMAGE_NAME = "app.test.js"                   // change to your app name
         IMAGE_TAG = "latest"
     }
 
