@@ -1,5 +1,5 @@
 const request = require('supertest');
-//const server = require('../index.js');
+const server = require('../index.js');
 //const app = request(server);
 
 describe('GET /', () => {
